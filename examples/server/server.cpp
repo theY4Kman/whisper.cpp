@@ -1078,8 +1078,13 @@ int main(int argc, char ** argv) {
                 };
 
                 if (!params.no_timestamps) {
-                    segment["start"] = whisper_full_get_segment_t0(ctx, i) * 0.01;
-                    segment["end"] = whisper_full_get_segment_t1(ctx, i) * 0.01;
+                    if (params.vad) {
+                        segment["start"] = vad_ts_to_original_ts(whisper_full_get_segment_t0(ctx, i), ctx) * 0.01;
+                        segment["end"] = vad_ts_to_original_ts(whisper_full_get_segment_t1(ctx, i), ctx) * 0.01;
+                    } else {
+                        segment["start"] = whisper_full_get_segment_t0(ctx, i) * 0.01;
+                        segment["end"] = whisper_full_get_segment_t1(ctx, i) * 0.01;
+                    }
                 }
 
                 float total_logprob = 0;
@@ -1093,8 +1098,13 @@ int main(int argc, char ** argv) {
                     segment["tokens"].push_back(token.id);
                     json word = json{{"word", whisper_full_get_token_text(ctx, i, j)}};
                     if (!params.no_timestamps) {
-                        word["start"] = token.t0 * 0.01;
-                        word["end"] = token.t1 * 0.01;
+                        if (params.vad) {
+                            word["start"] = vad_ts_to_original_ts(token.t0, ctx) * 0.01;
+                            word["end"] = vad_ts_to_original_ts(token.t1, ctx) * 0.01;
+                        } else {
+                            word["start"] = token.t0 * 0.01;
+                            word["end"] = token.t1 * 0.01;
+                        }
                         word["t_dtw"] = token.t_dtw;
                     }
                     word["probability"] = token.p;
